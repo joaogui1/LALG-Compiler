@@ -7,10 +7,11 @@ TYPE_PARAMETER = 'par'
 TYPE_ARRAY = 'arr'
 
 class SymbolObject(object):
-    def __init__(self, name, object_type, data_type, attribute=None, others=None) -> None:
+    def __init__(self, name, object_type, data_type, dp=None, attribute=None, others=None) -> None:
         self.name = name
         self.object_type = object_type
         self.data_type = data_type
+        self.dp = dp
 
         self.others = others if others is None else []
 
