@@ -68,14 +68,14 @@ reserved_tokens = {'integer': TOKEN_DATA_TYPE_INT,
 strings = set()
 
 class Token(object):
-    def __init__(self, value, type, row, col) -> None:
+    def __init__(self, value, type_of, row, col) -> None:
         self.value = value
-        self.type = type
+        self.type_of = type_of
         self.row = row
         self.col = col
     
     def __unicode__(self) -> str:
-        return f'{self.value}, {self.type}, {self.row}, {self.col}'
+        return f'{self.value}, {self.type_of}, {self.row}, {self.col}'
 
 def get_token_name(suffix):
     return TOKEN_NAME_PREFIX + suffix.upper()

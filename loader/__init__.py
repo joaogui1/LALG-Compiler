@@ -39,7 +39,7 @@ for digit in DIGITS:
     symbol_map[digit] = DIGIT
     symbol_map[int(digit)] = DIGIT
 
-with open(os.path.join(__name__, 'reserved_keywords.txt')) as keyword_file:
+with open(os.path.join(__name__, 'reserved_words.txt')) as keyword_file:
     for line in keyword_file.readlines():
         symbol = line.strip()
         symbol_map[symbol] = RESERVED

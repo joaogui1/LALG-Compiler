@@ -20,13 +20,14 @@ class Parser(object):
         
         return None
     
-    def match(self, type):
-        if self.curr_token.type == type:
+    def match(self, type_of):
+        print(type_of, self.curr_token.type_of)
+        if self.curr_token.type_of == type_of:
             if self.verbose:
-                print(f'Matched: {type}')
+                print(f'Matched: {type_of}')
             
             try:
-                self.curr_token = self.tokens.next()
+                self.curr_token = self.tokens[0]
             except StopIteration:
                 return
         else:
@@ -42,15 +43,17 @@ class Parser(object):
             self.ip += 1
         
     def parse(self):
-        self.curr_token = self.tokens.next()
+        self.curr_token = self.tokens[0]
+        print('aqui')
         self.match('TK_PROGRAM')
+        print('aqui')
         self.match(tokenizer.TOKEN_ID)
         self.match(tokenizer.TOKEN_SEMICOLON)
 
-        if self.curr_token.type == 'TK_VAR':
+        if self.curr_token.type_of == 'TK_VAR':
             self.variable_declaration()
-        elif self.curr_token.type == 'TK_PROCEDURE':
-            while self.curr_token.type == 'TK_PROCEDURE':
+        elif self.curr_token.type_of == 'TK_PROCEDURE':
+            while self.curr_token.type_of == 'TK_PROCEDURE':
                 self.procedure_declaration()
             self.begin()
         else:
@@ -67,8 +70,8 @@ class Parser(object):
         self.generate_op_code(OPCODE.HALT)
     
     def statementes(self):
-        while self.curr_token.type != 'TK_END':
-            type = self.curr_token.type
+        while self.curr_token.type_of != 'TK_END':
+            type = self.curr_token.type_of
             
             if type == 'TK_WRITELN':
                 self.write_line_statement()
@@ -94,7 +97,7 @@ class Parser(object):
                 return
 
     def find_name_or_error(self):
-        symbol = self.find_name_in_symbol_table(self.curr_token.type)
+        symbol = self.find_name_in_symbol_table(self.curr_token.type_of)
         if symbol is None:
             raise PascalError(f'Var {self.curr_token.value} is not declared at {self.curr_token.row} {self.curr_token.col}')
         else:
@@ -105,7 +108,7 @@ class Parser(object):
         lhs_type = symbol.type
         self.match(tokenizer.TOKEN_ID)
 
-        if self.curr_token.type == tokenizer.TOKEN_OPERATOR_LEFT_BRACKET:
+        if self.curr_token.type_of == tokenizer.TOKEN_OPERATOR_LEFT_BRACKET:
             self.array_assignment(symbol)
             return
         
@@ -140,11 +143,11 @@ class Parser(object):
     def t(self):
         t1 = self.f()
 
-        while self.curr_token.type == tokenizer.TOKEN_OPERATOR_MULTIPLICATION or \
-                       self.curr_token.type == tokenizer.TOKEN_OPERATOR_DIVISION or \
-                       self.curr_token.type == 'TK_DIV':
+        while self.curr_token.type_of == tokenizer.TOKEN_OPERATOR_MULTIPLICATION or \
+                       self.curr_token.type_of == tokenizer.TOKEN_OPERATOR_DIVISION or \
+                       self.curr_token.type_of == 'TK_DIV':
 
-            op = self.curr_token.type
+            op = self.curr_token.type_of
             self.match(op)
             t2 = self.f()
             t1 = self.emit(op, t1, t2)
@@ -282,7 +285,7 @@ class Parser(object):
         self.generate_address(0)
         self.statements()
 
-        if self.curr_token.type == 'TK_ELSE':
+        if self.curr_token.type_of == 'TK_ELSE':
             self.generate_op_code(OPCODE.JMP)
             hole_2 = self.ip
             self.generate_address(0)
@@ -454,10 +457,10 @@ class Parser(object):
         self.match('TK_OF')
         hole_list = []
 
-        while self.curr_token.type == tokenizer.TOKEN_DATA_TYPE_INT or \
-                self.curr_token.type == tokenizer.TOKEN_DATA_TYPE_CHAR or \
-                self.curr_token.type == tokenizer.TOKEN_CHARACTER or \
-                self.curr_token.type == tokenizer.TOKEN_DATA_TYPE_BOOL:
+        while self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_INT or \
+                self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_CHAR or \
+                self.curr_token.type_of == tokenizer.TOKEN_CHARACTER or \
+                self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_BOOL:
             
             e2 = self.e()
             self.emit(tokenizer.TOKEN_OPERATOR_EQUALITY, e1, e2)
@@ -477,7 +480,7 @@ class Parser(object):
             self.generate_address(save)
             self.ip = save
 
-            if self.curr_token.type != 'TK_END':
+            if self.curr_token.type_of != 'TK_END':
                 symbol = self.find_name_in_symbol_table(checker.value)
                 if symbol is not None:
                     self.generate_op_code(OPCODE.PUSH)
@@ -498,7 +501,7 @@ class Parser(object):
         self.match(tokenizer.TOKEN_OPERATOR_LEFT_PAREN)
 
         while True:
-            if self.curr_token.type == tokenizer.TOKEN_ID:
+            if self.curr_token.type_of == tokenizer.TOKEN_ID:
                 symbol = self.find_name_or_error()
                 if hasattr(symbol, 'assignment_type'):
                     self.match(tokenizer.TOKEN_ID)
@@ -525,15 +528,15 @@ class Parser(object):
                 else:
                     raise PascalError(f'writeln does not support {str(symbol)}')
             
-            if self.curr_token.type == tokenizer.TOKEN_DATA_TYPE_INT:
+            if self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_INT:
                 self.generate_op_code(OPCODE.PRINT_ILIT)
                 self.generate_address(int(self.curr_token.value))
                 self.match(tokenizer.TOKEN_DATA_TYPE_INT)
-            elif self.curr_token.type == tokenizer.TOKEN_DATA_TYPE_CHAR:
+            elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_CHAR:
                 self.generate_op_code(OPCODE.PRINT_C)
                 self.generate_address(self.curr_token.value)
                 self.match(tokenizer.TOKEN_CHARACTER)
-            elif self.curr_token.type == tokenizer.TOKEN_STRING_LIT:
+            elif self.curr_token.type_of == tokenizer.TOKEN_STRING_LIT:
                 self.generate_op_code(OPCODE.PUSHI)
                 s = self.curr_token.value
                 s = s[1:-1]
@@ -544,7 +547,7 @@ class Parser(object):
                     self.ip += 1
                 self.match(tokenizer.TOKEN_STRING_LIT)
 
-            type = self.curr_token.type
+            type = self.curr_token.type_of
             if type == tokenizer.TOKEN_OPERATOR_COMMA:
                 self.match(tokenizer.TOKEN_OPERATOR_COMMA)
             elif type == tokenizer.TOKEN_OPERATOR_RIGHT_PAREN:
@@ -552,7 +555,7 @@ class Parser(object):
                 self.generate_op_code(OPCODE.NEW_LINE)
                 return
             else:
-                raise PascalError(f'Expected comma or right paren, found: {self.curr_token.type}')
+                raise PascalError(f'Expected comma or right paren, found: {self.curr_token.type_of}')
     
     def boolean(self, op, t1, t2):
         if t1 == t2:
@@ -690,35 +693,35 @@ class Parser(object):
         self.match('TK_VAR')
         declarations = []
 
-        while self.curr_token.type == tokenizer.TOKEN_ID:
+        while self.curr_token.type_of == tokenizer.TOKEN_ID:
             if self.curr_token.value in declarations:
                 raise PascalError(f'Variable already declared at {self.curr_token.row} {self.curr_token.col}: {self.curr_token.value}')
 
             declarations.append(self.curr_token.value)
             self.match(tokenizer.TOKEN_ID)
 
-            if self.curr_token.type == tokenizer.TOKEN_OPERATOR_COMMA:
+            if self.curr_token.type_of == tokenizer.TOKEN_OPERATOR_COMMA:
                 self.match(tokenizer.TOKEN_OPERATOR_COMMA)
 
         self.match(tokenizer.TOKEN_OPERATOR_COLON)
         
-        if self.curr_token.type == tokenizer.TOKEN_DATA_TYPE_INT:
+        if self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_INT:
             self.match(tokenizer.TOKEN_DATA_TYPE_INT)
             data_type = tokenizer.TOKEN_DATA_TYPE_INT
-        elif self.curr_token.type == tokenizer.TOKEN_DATA_TYPE_REAL:
+        elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_REAL:
             self.match(tokenizer.TOKEN_DATA_TYPE_REAL)
             data_type = tokenizer.TOKEN_DATA_TYPE_REAL
-        elif self.curr_token.type == tokenizer.TOKEN_DATA_TYPE_CHAR:
+        elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_CHAR:
             self.match(tokenizer.TOKEN_DATA_TYPE_CHAR)
             data_type = tokenizer.TOKEN_DATA_TYPE_CHAR
-        elif self.curr_token.type == tokenizer.TOKEN_DATA_TYPE_BOOL:
+        elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_BOOL:
             self.match(tokenizer.TOKEN_DATA_TYPE_BOOL)
             data_type = tokenizer.TOKEN_DATA_TYPE_BOOL
-        elif self.curr_token.type == 'TK_ARRAY':
+        elif self.curr_token.type_of == 'TK_ARRAY':
             self.match('TK_ARRAY')
             data_type = tokenizer.TOKEN_DATA_TYPE_ARRAY
         else:
-            raise PascalError(f'{self.curr_token.type} data type is invalid {self.curr_token.row} {self.curr_token.col}')
+            raise PascalError(f'{self.curr_token.type_of} data type is invalid {self.curr_token.row} {self.curr_token.col}')
 
         if data_type == tokenizer.TOKEN_DATA_TYPE_ARRAY:
             self.match(tokenizer.TOKEN_OPERATOR_LEFT_BRACKET)
@@ -727,20 +730,20 @@ class Parser(object):
             self.match(tokenizer.TOKEN_OPERATOR_RIGHT_BRACKET)
             self.match('TK_OF')
 
-            if self.curr_token.type == tokenizer.TOKEN_DATA_TYPE_INT:
+            if self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_INT:
                 self.match(tokenizer.TOKEN_DATA_TYPE_INT)
                 assignment_type = tokenizer.TOKEN_DATA_TYPE_INT
-            elif self.curr_token.type == tokenizer.TOKEN_DATA_TYPE_REAL:
+            elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_REAL:
                 self.match(tokenizer.TOKEN_DATA_TYPE_REAL)
                 assignment_type = tokenizer.TOKEN_DATA_TYPE_REAL
-            elif self.curr_token.type == tokenizer.TOKEN_DATA_TYPE_CHAR:
+            elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_CHAR:
                 self.match(tokenizer.TOKEN_DATA_TYPE_CHAR)
                 assignment_type = tokenizer.TOKEN_DATA_TYPE_CHAR
-            elif self.curr_token.type == tokenizer.TOKEN_DATA_TYPE_BOOL:
+            elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_BOOL:
                 self.match(tokenizer.TOKEN_DATA_TYPE_BOOL)
                 assignment_type = tokenizer.TOKEN_DATA_TYPE_BOOL
             else:
-                raise PascalError(f'Array of type <{self.curr_token.type}> is not valid.')
+                raise PascalError(f'Array of type <{self.curr_token.type_of}> is not valid.')
 
             self.match(tokenizer.TOKEN_SEMICOLON)
             attributes = {
@@ -773,9 +776,9 @@ class Parser(object):
                                                                     dp=self.dp))
                 self.dp += 1
         
-        if self.curr_token.type == 'TK_VAR':
+        if self.curr_token.type_of == 'TK_VAR':
             self.variable_declaration()
-        elif self.curr_token.type == 'TK_PROCEDURE':
+        elif self.curr_token.type_of == 'TK_PROCEDURE':
             self.procedure_declaration()
         else:
             self.begin()

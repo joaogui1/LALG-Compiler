@@ -1,4 +1,5 @@
 import os
+import sys
 
 FILE_EXT = 'pas'
 
@@ -6,7 +7,13 @@ class PascalFile(object):
     def __init__(self, input_file, output_file='') -> None:
         self.input_file = input_file
         self.output_file = output_file
-        self.FILE = open(input_file)
+        
+        try:
+            self.FILE = open(input_file)
+        except Exception as e:
+            print('Could not open file')
+            sys.exit()
+
         self.content = self.FILE.read()
     
     def get_input_file(self) -> str:
