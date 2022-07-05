@@ -1,8 +1,4 @@
-from lib2to3.pgen2 import token
-from lib2to3.pgen2.token import SEMI
-from token import PLUS
-from loader import symbol_map, LETTER, RESERVED, SPACE, DIGIT, OPERATOR, EOL, \
-                        QUOTE, DOT, SEMICOLON, COMMENT, COMMENT_TYPES, HYPHEN, PascalError
+from pascal_loader import *
 
 TOKEN_NAME_PREFIX = 'TK_'
 
@@ -65,22 +61,25 @@ reserved_tokens = {'integer': TOKEN_DATA_TYPE_INT,
                    'char': TOKEN_DATA_TYPE_CHAR,
                    'boolean': TOKEN_DATA_TYPE_BOOL}
 
-strings = set()
+string_store = set()
 
 class Token(object):
-    def __init__(self, value, type_of, row, col) -> None:
-        self.value = value
+    def __init__(self, value_of, type_of, row, column) -> None:
+        self.value_of = value_of
         self.type_of = type_of
         self.row = row
-        self.col = col
-    
-    def __unicode__(self) -> str:
-        return f'{self.value}, {self.type_of}, {self.row}, {self.col}'
+        self.column = column
 
-def get_token_name(suffix):
+    def __unicode__(self) -> str:
+        return '<%s, %s, %i, %i>' % (self.value_of, self.type_of, self.row, self.column)
+
+    def __repr__(self):
+        return '<%s, %s, %i, %i>' % (self.value_of, self.type_of, self.row, self.column)
+
+def token_name(suffix):
     return TOKEN_NAME_PREFIX + suffix.upper()
 
-def letter(text):
+def case_letter(text):
     suffix = ''
     for char in text:
         char_val = symbol_map.get(char, None)
@@ -92,183 +91,184 @@ def letter(text):
     
     return suffix
 
-def quote(text, row, col):
+
+def case_quote(text, row, column):
     suffix = ''
     first_quote = False
+
     for char in text:
         char_val = symbol_map.get(char, None)
 
         if char_val == QUOTE and first_quote:
             suffix += char
-            strings.add(suffix.replace('\'', ''))
-            break
+            string_store.add(suffix.replace('\'', ''))
+            return suffix
         elif char_val == QUOTE and not first_quote:
+                suffix += char
+                first_quote = True
+        else:
+            if char == '\n':
+                row += 1
+            if char_val == EOL:
+                column += len(suffix)
+                raise PascalError('Not a valid string. (ln %i,col %i)' % (row, column))
             suffix += char
-            first_quote = True
-        elif char == '\n':
-            suffix += char
-            row += 1
-        elif char_val == EOL:
-            suffix += char
-            col += len(suffix)
-            raise PascalError(f'Invalid string at {row}, {col}')
 
-    return suffix
 
-def comment(text):
-    idx = 0
+def case_comment(text):
+    index = 0
     word = ''
 
-    while idx < len(text):
-        char = text[idx]
+    while index < len(text):
+        char = text[index]
+
         if char == '}':
             return word + char
-        elif char == '*' and text[idx+1] == ')':
-            return word + char + text[idx+1]
+        elif char == '*' and text[index + 1] == ')':
+            return word + char + text[index + 1]
         else:
             word += char
-            idx += 1
+            index += 1
 
-def inline_comment(text):
-    idx = 0
+def case_comment_inline(text):
+    index = 0
     word = ''
-    
-    while idx < len(text):
-        char = text[idx]
-        idx += 1
 
+    while index < len(text):
+        char = text[index]
+        
         if char == '\n':
             return word
         else:
             word += char
+        
+        index += 1
 
-def digit(text):
+
+def case_digit(text):
     suffix = ''
     digit_seen = False
-    idx = 0
+    index = 0
 
-    while idx < len(text):
-        char = text[idx]
+    while index < len(text):
+        char = text[index]
         char_val = symbol_map.get(char, None)
 
         if char_val == DIGIT:
             suffix += char
             digit_seen = True
-            idx += 1
-        elif char_val == HYPHEN:
+            index += 1
+        elif char_val == '-':
             suffix += char
-            idx += 1
-        elif char_val == DOT and digit_seen:
-            if suffix.__contains__('.') and symbol_map.get(text[idx+1]) == DOT:
-                suffix += char + text[idx + 1]
-                idx += 2
-            else:
-                suffix += char
-                idx += 1
-        elif char_val == DOT and not digit_seen:
-            raise PascalError('Invalid number')
-        elif char.lower() == 'e':
-            if text[idx+1] == HYPHEN or text[idx+1] == PLUS:
-                suffix += char + text[idx+1]
-                idx += 2
-            elif symbol_map.get(text[idx+1]) == DIGIT:
-                suffix += char
-                idx += 1
-            else:
-                raise PascalError('Invalid number')
-        else:
-            break
-    
-    return suffix
-
-def operator(text):
-    idx = 0
-
-    if text[idx] == '(' and text[idx+1] == '*':
-        return comment(text[idx:])
-    elif text[idx] == ':' and text[idx+1] == '=':
-        return text[idx] + text[idx+1]
-    elif text[idx] == '<' and (text[idx+1] == '=' or text[idx+1] == '>'):
-        return text[idx] + text[idx+1]
-    elif text[idx] == '>' and text[idx+1] == '=':
-        return text[idx] + text[idx+1]
-    elif text[idx] == '/' and text[idx+1] == '/':
-        return inline_comment(text[idx:])
-    else:
-        return text[idx]
-
-def get_token(file):
-    row, col, idx = 1, 1, 0
-    tokens = []
-    text = file.content
-
-    while idx < len(text):
-        char_val = symbol_map.get(text[idx])
-        if char_val == LETTER:
-            word = letter(text[idx:])
-            idx += len(word)
-            col += len(word)
-
-            if word in reserved_tokens:
-                tokens.append(Token(word, get_token_name(word), row, col))
-            else:
-                tokens.append(Token(word, TOKEN_ID, row, col))
-        elif char_val == DIGIT:
-            word = digit(text[idx:])
-            idx += len(word)
-            col += len(word)
-            
-            if word.count('.') == 2:
-                tokens.append(Token(word, TOKEN_DATA_TYPE_RANGE, row, col))
-            elif word.count('.') == 1:
-                tokens.append(Token(word, TOKEN_REAL_LIT, row, col))
-            else:
-                tokens.append(Token(word, TOKEN_DATA_TYPE_INT, row, col))
-        elif char_val == SPACE:
-            col += 1
-            idx += 1
-        elif char_val == OPERATOR:
-            word = operator(text[idx:])
-            idx += len(word)
-            col += len(word)
-
-            if word[:2] in COMMENT_TYPES:
-                tokens.append(Token(word, TOKEN_COMMENT, row, col))
-            else:
-                tokens.append(Token(word, operators_classifications[word], row, col))
-        elif char_val == QUOTE:
-            word = quote(text[idx:], row, col)
-            idx += len(word)
-
-            if len(word) == 3:
-                tokens.append(Token(str(word.replace("'", '')), TOKEN_CHARACTER, row, col))
-            else:
-                tokens.append(Token(word, TOKEN_STRING_LIT, row, col))
-        elif char_val == EOL:
-            idx += 1
-            row += 1
-            col = 1
+            index += 1
         elif char_val == DOT:
-            idx += 1
-            col += 1
-            tokens.append(Token('.', TOKEN_DOT, row, col))
-        elif char_val == SEMICOLON:
-            idx += 1
-            col += 1
-            tokens.append(Token(';', TOKEN_SEMICOLON, row, col))
-        elif char_val == COMMENT:
-            word = comment(text[idx:])
-            idx += len(word)
-            tokens.append(Token(word, TOKEN_COMMENT, row, col))        
-            col += len(word)
+            if digit_seen:
+                if suffix.__contains__('.') and symbol_map.get(text[index + 1]) is DOT:
+                    suffix += char
+                    suffix += text[index + 1]
+                    index += 2
+                else:
+                    suffix += char
+                    index += 1
+            else:
+                raise PascalError('Invalid literal.')
+        elif char.lower() == 'e':
+            if text[index + 1] == '-' or text[index + 1] == '+':
+                suffix += char
+                suffix += text[index + 1]
+                index += 2
+            elif symbol_map.get(text[index + 1]) is DIGIT:
+                suffix += char
+                index += 1
+            else:
+                raise PascalError('Invalid literal.')
         else:
-            raise PascalError(f'Unknown token at {row}, {col}: {text[idx]}')
-    
-    tokens.append(Token('EOF', TOKEN_EOF, row, col))
-    return tokens
+            return suffix
 
 
-for key, value in symbol_map.items():
+def case_operator(text):
+    index = 0
+
+    if text[index] == '(' and text[index + 1] == '*':
+        return case_comment(text[index:])
+    elif text[index] == ':' and text[index + 1] == '=':
+        return text[index] + text[index + 1]
+    elif text[index] == '<' and (text[index + 1] == '=' or text[index + 1] == '>'):
+        return text[index] + text[index + 1]
+    elif text[index] == '>' and text[index + 1] == '=':
+        return text[index] + text[index + 1]
+    elif text[index] == '/' and text[index + 1] == '/':
+        return case_comment_inline(text[index:])
+    else:
+        return text[index]
+
+def get_token(pascal_file):
+    row, column, index = 1, 1, 0
+    token_list = []
+
+    while index < len(pascal_file.contents):
+        symbol = symbol_map.get(pascal_file.contents[index])
+        
+        if symbol == LETTER:
+            word = case_letter(pascal_file.contents[index:])
+            index += len(word)
+            if reserved_tokens.get(word) is None:
+                token_list.append(Token(word, TOKEN_ID, row, column))
+            else:
+                token_list.append(Token(word, token_name(word), row, column))
+            column += len(word)
+        elif symbol == DIGIT:
+            word = case_digit(pascal_file.contents[index:])
+            index += len(word)
+            if word.count('.') == 2:
+                token_list.append(Token(word, TOKEN_DATA_TYPE_RANGE, row, column))
+            elif word.count('.') == 1:
+                token_list.append(Token(word, TOKEN_REAL_LIT, row, column))
+            else:
+                token_list.append(Token(word, TOKEN_DATA_TYPE_INT, row, column))
+            column += len(word)
+        elif symbol == SPACE:
+            column += 1
+            index += 1
+        elif symbol == OPERATOR:
+            word = case_operator(pascal_file.contents[index:])
+            index += len(word)
+            if word[:2] in COMMENT_TYPES:
+                token_list.append(Token(word, TOKEN_COMMENT, row, column))
+            else:
+                token_list.append(Token(word, operators_classifications[word], row, column))
+            column += len(word)
+        elif symbol == QUOTE:
+            word = case_quote(pascal_file.contents[index:], row, column)
+            index += len(word)
+            if len(word) == 3:
+                token_list.append(Token(str(word.replace("'", '')), TOKEN_CHARACTER, row, column))
+            else:
+                token_list.append(Token(word, TOKEN_STRING_LIT, row, column))
+            column += len(word)
+        elif symbol == EOL:
+            index += 1
+            row += 1
+            column = 1
+        elif symbol == DOT:
+            index += 1
+            token_list.append(Token('.', TOKEN_DOT, row, column))
+            column += 1
+        elif symbol == SEMICOLON:
+            index += 1
+            token_list.append(Token(';', TOKEN_SEMICOLON, row, column))
+            column += 1
+        elif symbol == COMMENT:
+            word = case_comment(pascal_file.contents[index:])
+            index += len(word)
+            token_list.append(Token(word, TOKEN_COMMENT, row, column))
+            column += len(word)
+        else:
+            raise PascalError('Unknown symbol: %s (ln %i, col %i)' % (pascal_file.contents[index], row, column))
+    token_list.append(Token('EOF', TOKEN_EOF, row, column))
+    return token_list
+
+for keyword, value in symbol_map.items():
     if value == RESERVED:
-        reserved_tokens[key.upper()] = TOKEN_RESERVED
-        reserved_tokens[key.lower()] = TOKEN_RESERVED
+        reserved_tokens[keyword.lower()] = TOKEN_RESERVED
+        reserved_tokens[keyword.upper()] = TOKEN_RESERVED
