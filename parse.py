@@ -6,6 +6,10 @@ from constants import *
 class Parser(object):
     def __init__(self, tokens, verbose=False) -> None:
         self.tokens = tokens
+
+        for token in tokens:
+            print(token.type_of)
+
         self.curr_token = None
         self.ip = 0
         self.dp = 0
@@ -15,6 +19,7 @@ class Parser(object):
     
     def find_name_in_symbol_table(self, name):
         for symbol in self.symbols:
+            print(symbol.name, name)
             if symbol.name == name:
                 return symbol
         
@@ -27,7 +32,7 @@ class Parser(object):
                 print(f'Matched: {type_of}')
             
             try:
-                self.curr_token = self.tokens[0]
+                self.curr_token = self.tokens.pop(0)
             except StopIteration:
                 return
         else:
@@ -43,10 +48,8 @@ class Parser(object):
             self.ip += 1
         
     def parse(self):
-        self.curr_token = self.tokens[0]
-        print('aqui')
+        self.curr_token = self.tokens.pop(0)
         self.match('TK_PROGRAM')
-        print('aqui')
         self.match(tokenizer.TOKEN_ID)
         self.match(tokenizer.TOKEN_SEMICOLON)
 
@@ -97,7 +100,7 @@ class Parser(object):
                 return
 
     def find_name_or_error(self):
-        symbol = self.find_name_in_symbol_table(self.curr_token.type_of)
+        symbol = self.find_name_in_symbol_table(self.curr_token.value)
         if symbol is None:
             raise PascalError(f'Var {self.curr_token.value} is not declared at {self.curr_token.row} {self.curr_token.col}')
         else:
@@ -105,7 +108,7 @@ class Parser(object):
 
     def assignment_statement(self):
         symbol = self.find_name_or_error()
-        lhs_type = symbol.type
+        lhs_type = symbol.data_type
         self.match(tokenizer.TOKEN_ID)
 
         if self.curr_token.type_of == tokenizer.TOKEN_OPERATOR_LEFT_BRACKET:
@@ -155,7 +158,7 @@ class Parser(object):
         return t1
 
     def f(self):
-        type = self.curr.type
+        type = self.curr_token.type_of
 
         if type == tokenizer.TOKEN_ID:
             symbol = self.find_name_or_error()
@@ -755,7 +758,7 @@ class Parser(object):
 
             if extractor['access_type'] == tokenizer.TOKEN_DATA_TYPE_INT:
                 for variable in declarations:
-                    self.symbol_table.append(symbol_tables.SymbolObject(name=variable,
+                    self.symbols.append(symbol_tables.SymbolObject(name=variable,
                                                                         object_type=symbol_tables.TYPE_ARRAY,
                                                                         data_type=tokenizer.TOKEN_DATA_TYPE_ARRAY,
                                                                         dp=self.dp,
@@ -770,7 +773,7 @@ class Parser(object):
         else:
             self.match(tokenizer.TOKEN_SEMICOLON)
             for variable in declarations:
-                self.symbol_table.append(symbol_tables.SymbolObject(name=variable,
+                self.symbols.append(symbol_tables.SymbolObject(name=variable,
                                                                     object_type=symbol_tables.TYPE_VARIABLE,
                                                                     data_type=data_type,
                                                                     dp=self.dp))
@@ -782,3 +785,27 @@ class Parser(object):
             self.procedure_declaration()
         else:
             self.begin()
+
+    def statements(self):
+        while self.curr_token.type_of != 'TK_END':
+            type_of = self.curr_token.type_of
+            if type_of == 'TK_WRITELN':
+                self.write_line_statement()
+            elif type_of == tokenizer.TOKEN_ID:
+                self.assignment_statement()
+            elif type_of == 'TK_WHILE':
+                self.while_statement()
+            elif type_of == 'TK_REPEAT':
+                self.repeat_statement()
+            elif type_of == 'TK_IF':
+                self.if_statement()
+            elif type_of == 'TK_FOR':
+                self.for_statement()
+            elif type_of == 'TK_CASE':
+                self.case_statement()
+            elif type_of == tokenizer.TOKEN_SEMICOLON:
+                self.match(tokenizer.TOKEN_SEMICOLON)
+            elif type_of == tokenizer.TOKEN_COMMENT:
+                self.match(tokenizer.TOKEN_COMMENT)
+            else:
+                return

@@ -16,9 +16,8 @@ class SymbolObject(object):
         self.others = others if others is None else []
 
         if attribute is not None:
-            for attr, value in attribute.iteritems():
+            for attr, value in attribute.items():
                 self.__setattr__(attr, value)
-
     
     def __unicode__(self) -> str:
         return f'{self.name}, {self.object_type}, {self.data_type}'
