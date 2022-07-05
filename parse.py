@@ -2,14 +2,13 @@ from loader import PascalError
 import loader.symbol_tables as symbol_tables
 import tokenizer
 from constants import *
+import sys, threading
+sys.setrecursionlimit(10**7) # max depth of recursion
+threading.stack_size(2**27)  # new thread will get stack of such size
 
 class Parser(object):
     def __init__(self, tokens, verbose=False) -> None:
         self.tokens = tokens
-
-        for token in tokens:
-            print(token.type_of)
-
         self.curr_token = None
         self.ip = 0
         self.dp = 0
@@ -19,21 +18,21 @@ class Parser(object):
     
     def find_name_in_symbol_table(self, name):
         for symbol in self.symbols:
-            print(symbol.name, name)
             if symbol.name == name:
                 return symbol
         
         return None
     
     def match(self, type_of):
-        print(type_of, self.curr_token.type_of)
+        # print(type_of, self.curr_token.type_of)
         if self.curr_token.type_of == type_of:
             if self.verbose:
                 print(f'Matched: {type_of}')
             
-            try:
+            if len(self.tokens) > 0:
                 self.curr_token = self.tokens.pop(0)
-            except StopIteration:
+            else:
+                print('retornou')
                 return
         else:
             raise PascalError(f'Token mismatch at {self.curr_token.row} {self.curr_token.col}, expected {str(type)} got {str(self.curr_token)}')
@@ -133,10 +132,10 @@ class Parser(object):
     def e(self):
         t1 = self.t()
 
-        while self.curr.type == tokenizer.TOKEN_OPERATOR_PLUS or \
-                self.curr.type == tokenizer.TOKEN_OPERATOR_MINUS:
+        while self.curr_token.type_of == tokenizer.TOKEN_OPERATOR_PLUS or \
+                self.curr_token.type_of == tokenizer.TOKEN_OPERATOR_MINUS:
             
-            op = self.curr.type
+            op = self.curr_token.type_of
             self.match(op)
             t2 = self.t()
             t1 = self.emit(op, t1, t2)

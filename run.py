@@ -10,7 +10,6 @@ from emulator import Emulator
 if __name__ == '__main__':
     pp = pprint.PrettyPrinter()
     tokens = get_token(PascalFile(input_file='samples/arrays.pas'))
-    print(tokens)
     parser = Parser(tokens=tokens)
     bytes = parser.parse()
     emulator = Emulator(bytes)

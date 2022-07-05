@@ -1,4 +1,4 @@
-import ctypes
+import struct
 
 class OPCODE(object):
     ADD = 0
@@ -36,7 +36,7 @@ class OPCODE(object):
     PRINT_STR_LIT = 32
     PUSH = 33
     PUSH_CHAR = 34
-    PUSHI = 34
+    PUSHI = 35
     RET_AND_PRINT = 36
     RETRIEVE = 37
     SUB = 38
@@ -57,10 +57,13 @@ CONDITIONALS = {
 INSTRUCTION_LENGTH = 5
 
 def float_to_bits(val):
-    return ctypes.c_int.from_address(ctypes.addressof(val)).value
+    s = struct.pack('>f', val)
+    return struct.unpack('>l', s)[0]
+
 
 def bits_to_float(val):
-    return ctypes.c_int.from_buffer(ctypes.c_float(val)).value
+    s = struct.pack('>l', val)
+    return struct.unpack('>f', s)[0]
 
 def byte_unpacker(bytes):
     return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | (bytes[3])

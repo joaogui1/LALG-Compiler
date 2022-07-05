@@ -1,6 +1,9 @@
+from lib2to3.pgen2.token import OP
 from loader import PascalError
 from constants import *
-import sys
+import sys, threading
+sys.setrecursionlimit(10**7) # max depth of recursion
+threading.stack_size(2**27)  # new thread will get stack of such size
 
 class Emulator(object):
     def __init__(self, bytes) -> None:
@@ -50,9 +53,13 @@ class Emulator(object):
         }
 
         op = self.bytes[self.ip]
+        # print(op)
         if op in operations:
+            print(op)
             operations[op]()
-            self.start()
+
+            if op != OPCODE.HALT:
+                self.start()
         else:
             print(f'Stack {self.stack}')
             raise PascalError(f'Operation {op} is not supported')
@@ -95,32 +102,32 @@ class Emulator(object):
     def gte(self) -> None:
         self.ip += 1
         new_top = self.stack.pop() <= self.stack.pop()
-        self.stack.appned(new_top)
+        self.stack.append(new_top)
     
     def gtr(self) -> None:
         self.ip += 1
         new_top = self.stack.pop() > self.stack.pop()
-        self.stack.appned(new_top)
+        self.stack.append(new_top)
     
     def lte(self) -> None:
         self.ip += 1
         new_top = self.stack.pop() >= self.stack.pop()
-        self.stack.appned(new_top)
+        self.stack.append(new_top)
     
     def les(self) -> None:
         self.ip += 1
         new_top = self.stack.pop() < self.stack.pop()
-        self.stack.appned(new_top)
+        self.stack.append(new_top)
     
     def eql(self) -> None:
         self.ip += 1
         new_top = self.stack.pop() == self.stack.pop()
-        self.stack.appned(new_top)
+        self.stack.append(new_top)
     
     def neq(self) -> None:
         self.ip += 1
         new_top = self.stack.pop() != self.stack.pop()
-        self.stack.appned(new_top)
+        self.stack.append(new_top)
 
     def xchg(self) -> None:
         self.ip += 1
