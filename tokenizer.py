@@ -67,10 +67,10 @@ class Token(object):
         self.column = column
 
     def __unicode__(self) -> str:
-        return '<%s, %s, %i, %i>' % (self.value_of, self.type_of, self.row, self.column)
+        return f"<{self.value_of}, {self.type_of}, {self.row}, {self.column}>"
 
     def __repr__(self):
-        return '<%s, %s, %i, %i>' % (self.value_of, self.type_of, self.row, self.column)
+        return f"<{self.value_of}, {self.type_of}, {self.row}, {self.column}>"
 
 def token_name(suffix):
     return TOKEN_NAME_PREFIX + suffix.upper()
@@ -216,9 +216,8 @@ def get_token(pascal_file):
         elif symbol == DIGIT:
             word = case_digit(pascal_file.contents[index:])
             index += len(word)
-            if word.count('.') == 2:
-                token_list.append(Token(word, TOKEN_DATA_TYPE_RANGE, row, column))
-            elif word.count('.') == 1:
+            #TODO tem que lidar com erro aqui, não?
+            if word.count('.') == 1:
                 token_list.append(Token(word, TOKEN_REAL_LIT, row, column))
             else:
                 token_list.append(Token(word, TOKEN_DATA_TYPE_INT, row, column))
@@ -229,6 +228,7 @@ def get_token(pascal_file):
         elif symbol == OPERATOR:
             word = case_operator(pascal_file.contents[index:])
             index += len(word)
+            #TODO acho que temos que mudar para word[0] já que em LALG os comentários são {}
             if word[:2] in COMMENT_TYPES:
                 token_list.append(Token(word, TOKEN_COMMENT, row, column))
             else:
