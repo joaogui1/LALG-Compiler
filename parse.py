@@ -83,60 +83,18 @@ class Parser(object):
         elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_REAL:
             self.match(tokenizer.TOKEN_DATA_TYPE_REAL)
             data_type = tokenizer.TOKEN_DATA_TYPE_REAL
-        elif self.curr_token.type_of == 'TK_ARRAY':
-            self.match('TK_ARRAY')
-            data_type = tokenizer.TOKEN_DATA_TYPE_ARRAY
         else:
             raise PascalError(f'{self.curr_token.type_of} data type is invalid at {self.curr_token.row} {self.curr_token.column}')
 
-        if data_type == tokenizer.TOKEN_DATA_TYPE_ARRAY:
-            self.match(tokenizer.TOKEN_OPERATOR_LEFT_BRACKET)
-            extractor = self.extract_ranges(self.curr_token)
-            self.match(tokenizer.TOKEN_DATA_TYPE_RANGE)
-            self.match(tokenizer.TOKEN_OPERATOR_RIGHT_BRACKET)
-            self.match('TK_OF')
-
-            if self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_INT:
-                self.match(tokenizer.TOKEN_DATA_TYPE_INT)
-                assignment_type = tokenizer.TOKEN_DATA_TYPE_INT
-            elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_REAL:
-                self.match(tokenizer.TOKEN_DATA_TYPE_REAL)
-                assignment_type = tokenizer.TOKEN_DATA_TYPE_REAL
-            else:
-                raise PascalError('Array of type <%s> is not valid.' % self.curr_token.type_of)
-
-            self.match(tokenizer.TOKEN_SEMICOLON)
-            attributes = {
-                'left': extractor['left'],
-                'right': extractor['right'],
-                'access_type': extractor['access_type'],
-                'assignment_type': assignment_type
-            }
-
-            if extractor['access_type'] == tokenizer.TOKEN_DATA_TYPE_INT:
-                for variable in declarations:
-                    new_symbol = symbol_tables.SymbolObject(name=variable,
-                                                            object_type=symbol_tables.TYPE_ARRAY,
-                                                            data_type=tokenizer.TOKEN_DATA_TYPE_ARRAY,
-                                                            dp=self.dp,
-                                                            attribute=attributes)
-                    self.symbol_table.append(new_symbol)
-                    self.dp += 4 * int(extractor['right']) - int(extractor['left'])
-            elif extractor['access_type'] == tokenizer.TOKEN_DATA_TYPE_CHAR:
-                pass
-            else:
-                raise PascalError(f'Array type {extractor["access_type"]} is not allowed.')
-
-        else:
-            self.match(tokenizer.TOKEN_SEMICOLON)
-            
-            for variable in declarations:
-                new_symbol = symbol_tables.SymbolObject(name=variable,
-                                                        object_type=symbol_tables.TYPE_VARIABLE,
-                                                        data_type=data_type,
-                                                        dp=self.dp)
-                self.symbol_table.append(new_symbol)
-                self.dp += 1
+        self.match(tokenizer.TOKEN_SEMICOLON)
+        
+        for variable in declarations:
+            new_symbol = symbol_tables.SymbolObject(name=variable,
+                                                    object_type=symbol_tables.TYPE_VARIABLE,
+                                                    data_type=data_type,
+                                                    dp=self.dp)
+            self.symbol_table.append(new_symbol)
+            self.dp += 1
         
         if self.curr_token.type_of == 'TK_VAR':
             self.variable_declaration()
@@ -198,10 +156,6 @@ class Parser(object):
         lhs_type = symbol.data_type
         self.match(tokenizer.TOKEN_ID)
 
-        if self.curr_token.type_of == tokenizer.TOKEN_OPERATOR_LEFT_BRACKET:
-            self.array_assignment(symbol)
-            return
-
         self.match(tokenizer.TOKEN_OPERATOR_ASSIGNMENT)
         rhs_type = self.e()
 
@@ -261,11 +215,6 @@ class Parser(object):
                 self.generate_address(symbol.dp)
                 self.match(tokenizer.TOKEN_ID)
                 return symbol.data_type
-            elif symbol.object_type == symbol_tables.TYPE_ARRAY:
-                self.match(tokenizer.TOKEN_ID)
-                self.access_array(symbol)
-                self.generate_op_code(OPCODE['RETRIEVE'])
-                return symbol.assignment_type
         elif token_type == 'TK_NOT':
             self.generate_op_code(OPCODE['NOT'])
             self.match('TK_NOT')
@@ -493,8 +442,6 @@ class Parser(object):
                 elif expression == tokenizer.TOKEN_DATA_TYPE_BOOL:
                     self.generate_op_code(OPCODE['PRINT_B'])
                     self.generate_address(symbol.dp)
-                elif expression == tokenizer.TOKEN_DATA_TYPE_ARRAY:
-                    self.generate_op_code(OPCODE['RETRIEVE'])
                 else:
                     raise PascalError('writeln does not support symbol {str(symbol)}')
 
@@ -670,33 +617,6 @@ class Parser(object):
         
         self.ip = save
 
-    def extract_ranges(self, token) -> dict:
-        payload = {}
-        split = token.value_of.split('..')
-        
-        if len(split) != 2:
-            raise PascalError(f'Unexpected range for array, expected in form of 0..2, got {self.curr_token}')
-        
-        left, right = split[0], split[1]
-        if left.isalpha():
-            if right.isalpha():
-                payload['access_type'] = tokenizer.TOKEN_DATA_TYPE_CHAR
-            else:
-                raise PascalError('Array range mismatch, {left} {right}')
-        else:
-            if left.__contains__('.'):
-                if right.__contains__('.'):
-                    left, right = float(left), float(right)
-                    payload['data_type'] = tokenizer.TOKEN_DATA_TYPE_REAL
-                else:
-                    raise PascalError('Array range mismatch, {left} {right}')
-            else:
-                left, right = int(left), int(right)
-                payload['access_type'] = tokenizer.TOKEN_DATA_TYPE_INT
-        
-        payload['left'], payload['right'], payload['token'] = left, right, token
-        return payload
-
     def access_array(self, symbol) -> None:
         self.match(tokenizer.TOKEN_OPERATOR_LEFT_BRACKET)
         curr_symbol = self.find_name_or_error()
@@ -726,16 +646,6 @@ class Parser(object):
             self.generate_op_code(OPCODE['ADD'])
         else:
             raise Parser(f'Array access with type {curr_symbol.data_type} not supported.')
-
-    def array_assignment(self, symbol) -> None:
-        self.access_array(symbol)
-        self.match(tokenizer.TOKEN_OPERATOR_ASSIGNMENT)
-        e1 = self.e()
-
-        if e1 == symbol.assignment_type:
-            self.generate_op_code(OPCODE['DUMP'])
-        else:
-            raise PascalError('Array assignment type mismatch: {e1} and {symbol.assignment_type}')
 
     def procedure_declaration(self) -> None:
         self.match('TK_PROCEDURE')
