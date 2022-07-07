@@ -83,12 +83,6 @@ class Parser(object):
         elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_REAL:
             self.match(tokenizer.TOKEN_DATA_TYPE_REAL)
             data_type = tokenizer.TOKEN_DATA_TYPE_REAL
-        elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_CHAR:
-            self.match(tokenizer.TOKEN_DATA_TYPE_CHAR)
-            data_type = tokenizer.TOKEN_DATA_TYPE_CHAR
-        elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_BOOL:
-            self.match(tokenizer.TOKEN_DATA_TYPE_BOOL)
-            data_type = tokenizer.TOKEN_DATA_TYPE_BOOL
         elif self.curr_token.type_of == 'TK_ARRAY':
             self.match('TK_ARRAY')
             data_type = tokenizer.TOKEN_DATA_TYPE_ARRAY
@@ -108,12 +102,6 @@ class Parser(object):
             elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_REAL:
                 self.match(tokenizer.TOKEN_DATA_TYPE_REAL)
                 assignment_type = tokenizer.TOKEN_DATA_TYPE_REAL
-            elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_CHAR:
-                self.match(tokenizer.TOKEN_DATA_TYPE_CHAR)
-                assignment_type = tokenizer.TOKEN_DATA_TYPE_CHAR
-            elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_BOOL:
-                self.match(tokenizer.TOKEN_DATA_TYPE_BOOL)
-                assignment_type = tokenizer.TOKEN_DATA_TYPE_BOOL
             else:
                 raise PascalError('Array of type <%s> is not valid.' % self.curr_token.type_of)
 
@@ -299,28 +287,6 @@ class Parser(object):
             self.generate_address(self.curr_token.value_of)
             self.match(tokenizer.TOKEN_REAL_LIT)
             return tokenizer.TOKEN_REAL_LIT
-        elif token_type == tokenizer.TOKEN_DATA_TYPE_BOOL:
-            self.generate_op_code(OPCODE['PUSHI'])
-            self.generate_address(self.curr_token.value_of)
-            self.match(tokenizer.TOKEN_DATA_TYPE_BOOL)
-            return tokenizer.TOKEN_DATA_TYPE_BOOL
-        elif token_type == tokenizer.TOKEN_DATA_TYPE_CHAR:
-            return self.generate_pushi_and_address(tokenizer.TOKEN_DATA_TYPE_CHAR)
-        elif token_type == tokenizer.TOKEN_CHARACTER:
-            self.generate_op_code(OPCODE['PUSH_CHAR'])
-            self.generate_address(ord(self.curr_token.value_of))
-            self.match(tokenizer.TOKEN_CHARACTER)
-            return tokenizer.TOKEN_CHARACTER
-        elif token_type == 'TK_TRUE':
-            self.generate_op_code(OPCODE['PUSHI'])
-            self.generate_address(1)
-            self.match('TK_TRUE')
-            return tokenizer.TOKEN_DATA_TYPE_BOOL
-        elif token_type == 'TK_FALSE':
-            self.generate_op_code(OPCODE['PUSHI'])
-            self.generate_address(0)
-            self.match('TK_FALSE')
-            return tokenizer.TOKEN_DATA_TYPE_BOOL
         else:
             raise PascalError(f'f() does not support {self.curr_token.value_of} {token_type}')
 
@@ -668,9 +634,7 @@ class Parser(object):
         self.match('TK_OF')
         hole_list = []
         while self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_INT or \
-                self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_CHAR or \
-                self.curr_token.type_of == tokenizer.TOKEN_CHARACTER or \
-                self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_BOOL:
+                self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_CHAR:
             e2 = self.e()
             self.emit(tokenizer.TOKEN_OPERATOR_EQUALITY, e1, e2)
             self.match(tokenizer.TOKEN_OPERATOR_COLON)
