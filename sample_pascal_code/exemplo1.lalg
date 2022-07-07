@@ -3,19 +3,19 @@ program nome1;
 var a, a1, b : integer;
 
 begin
-    a := 1;
-    b := 1;
+    read(a);
+    a1:= a1*2;
 
-    a1 := a + b;
-    // repeat
-    //    writeln(a1);
-    //    a1:= a1-1;
-    // until a1<a;
+    while (a1>0) do
+        begin
+            write(a1);
+            a1:= a1-1;
+        end;
 
-    // while b<10 do
-    //    begin
-    //        b:=b+2;
-    //        a:=a-1;
-    //    end;
-    // if a<> b then writeln(a);
+    for b:=1 to 10 do
+        begin
+            b:=b+2;
+            a:=a-1;
+        end;
+    if a<> b then write(a);
 end. 
