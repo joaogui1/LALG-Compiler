@@ -1,6 +1,5 @@
 absolute
 and
-array
 asm
 begin
 case
@@ -20,7 +19,6 @@ goto
 if
 implementation
 in
-inherited
 inline
 interface
 label
