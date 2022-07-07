@@ -234,14 +234,6 @@ def get_token(pascal_file):
             else:
                 token_list.append(Token(word, operators_classifications[word], row, column))
             column += len(word)
-        elif symbol == QUOTE:
-            word = case_quote(pascal_file.contents[index:], row, column)
-            index += len(word)
-            if len(word) == 3:
-                token_list.append(Token(str(word.replace("'", '')), TOKEN_CHARACTER, row, column))
-            else:
-                token_list.append(Token(word, TOKEN_STRING_LIT, row, column))
-            column += len(word)
         elif symbol == EOL:
             index += 1
             row += 1
