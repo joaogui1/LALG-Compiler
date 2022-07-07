@@ -88,29 +88,6 @@ def case_letter(text):
     return suffix
 
 
-def case_quote(text, row, column):
-    suffix = ''
-    first_quote = False
-
-    for char in text:
-        char_val = symbol_map.get(char, None)
-
-        if char_val == QUOTE and first_quote:
-            suffix += char
-            string_store.add(suffix.replace('\'', ''))
-            return suffix
-        elif char_val == QUOTE and not first_quote:
-                suffix += char
-                first_quote = True
-        else:
-            if char == '\n':
-                row += 1
-            if char_val == EOL:
-                column += len(suffix)
-                raise PascalError('Not a valid string. (ln %i,col %i)' % (row, column))
-            suffix += char
-
-
 def case_comment(text):
     index = 0
     word = ''
