@@ -1,0 +1,10 @@
+program lalg;
+{outro teste}
+var a, minha_variavel: integer;
+begin
+read(a,@,1.a23);
+if minha_variavel <> a then begin
+minha_variavel := 30 + 108974289797788288
+end;
+{comentario}
+end.

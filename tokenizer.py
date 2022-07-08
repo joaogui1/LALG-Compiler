@@ -32,6 +32,8 @@ TOKEN_REAL_LIT = TOKEN_NAME_PREFIX + 'REAL_LIT'
 TOKEN_RESERVED = TOKEN_NAME_PREFIX + 'RESERVED'
 TOKEN_SEMICOLON = TOKEN_NAME_PREFIX + 'SEMICOLON'
 TOKEN_STRING_LIT = TOKEN_NAME_PREFIX + 'STR_LIT'
+TOKEN_DATA_TYPE_BOOL = TOKEN_NAME_PREFIX + 'BOOLEAN'
+TOKEN_DATA_TYPE_CHAR = TOKEN_NAME_PREFIX + 'CHAR'
 
 operators_classifications = {
     ':=': TOKEN_OPERATOR_ASSIGNMENT,
@@ -79,7 +81,7 @@ def case_letter(text):
     for char in text:
         char_val = symbol_map.get(char, None)
 
-        if char_val == LETTER or char == DIGIT:
+        if char_val == LETTER or char_val == DIGIT or char_val == UNDERLINE:
             suffix += char
         else:
             break
@@ -96,26 +98,9 @@ def case_comment(text):
 
         if char == '}':
             return word + char
-        elif char == '*' and text[index + 1] == ')':
-            return word + char + text[index + 1]
         else:
             word += char
             index += 1
-
-def case_comment_inline(text):
-    index = 0
-    word = ''
-
-    while index < len(text):
-        char = text[index]
-        
-        if char == '\n':
-            return word
-        else:
-            word += char
-        
-        index += 1
-
 
 def case_digit(text):
     suffix = ''
@@ -161,16 +146,12 @@ def case_digit(text):
 def case_operator(text):
     index = 0
 
-    if text[index] == '(' and text[index + 1] == '*':
-        return case_comment(text[index:])
-    elif text[index] == ':' and text[index + 1] == '=':
+    if text[index] == ':' and text[index + 1] == '=':
         return text[index] + text[index + 1]
     elif text[index] == '<' and (text[index + 1] == '=' or text[index + 1] == '>'):
         return text[index] + text[index + 1]
     elif text[index] == '>' and text[index + 1] == '=':
         return text[index] + text[index + 1]
-    elif text[index] == '/' and text[index + 1] == '/':
-        return case_comment_inline(text[index:])
     else:
         return text[index]
 
@@ -204,11 +185,7 @@ def get_token(pascal_file):
         elif symbol == OPERATOR:
             word = case_operator(pascal_file.contents[index:])
             index += len(word)
-            #TODO acho que temos que mudar para word[0] já que em LALG os comentários são {}
-            if word[:2] in COMMENT_TYPES:
-                token_list.append(Token(word, TOKEN_COMMENT, row, column))
-            else:
-                token_list.append(Token(word, operators_classifications[word], row, column))
+            token_list.append(Token(word, operators_classifications[word], row, column))
             column += len(word)
         elif symbol == EOL:
             index += 1

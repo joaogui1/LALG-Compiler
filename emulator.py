@@ -14,8 +14,11 @@ class Emulator(object):
 
     def flush(self) -> None:
         print('Flushing...')
+
         for item in self.out:
             print(item, end='')
+        
+        print()
 
     def start(self):
         operations = {
@@ -58,7 +61,7 @@ class Emulator(object):
         }
 
         op = self.bytes[self.ip]
-
+        
         if op in operations:
             operations[op]()
 
@@ -82,7 +85,11 @@ class Emulator(object):
         return byte_unpacker(immediate)
 
     def immediate_data(self) -> object:
-        return self.data_array[self.immediate_value()]
+        imm = self.immediate_value()
+        if imm not in self.data_array:
+            self.halt()
+
+        return self.data_array[imm]
 
     def pop(self) -> object:
         self.ip += 1
@@ -279,4 +286,4 @@ class Emulator(object):
     def halt(self) -> None:
         print('Done!')
         self.flush()
-        sys.exit()
+        exit(0)

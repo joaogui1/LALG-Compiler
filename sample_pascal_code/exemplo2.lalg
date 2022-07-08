@@ -8,7 +8,8 @@ var b: integer;
 procedure nomep(x: real);
     var a, c: integer;
     begin
-        read(c, a);
+        c := 1;
+        a := 1;
         if a<x+c then
             begin
                 a:= c+x;
@@ -16,7 +17,8 @@ procedure nomep(x: real);
             end
         else c:= a+x;
     end;
-        begin {programa principal}
-            read(b);
-            nomep(b);
-        end.
+
+begin {programa principal}
+    read(b);
+    nomep(b);
+end.

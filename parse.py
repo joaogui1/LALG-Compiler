@@ -1,4 +1,5 @@
 # coding=utf-8
+from re import T
 import tokenizer
 from helper import *
 from constants import *
@@ -24,6 +25,7 @@ class Parser(object):
         return None
 
     def match(self, token_type) -> None:
+        print(self.curr_token)
         if self.curr_token.type_of == token_type:
             try:
                 self.curr_token = next(self.tokens)
@@ -47,6 +49,9 @@ class Parser(object):
         self.match(tokenizer.TOKEN_ID)
         self.match(tokenizer.TOKEN_SEMICOLON)
         
+        while self.curr_token.type_of == 'TK_COMMENT':
+            self.match(tokenizer.TOKEN_COMMENT)
+
         if self.curr_token.type_of == 'TK_VAR':
             self.variable_declaration()
         elif self.curr_token.type_of == 'TK_PROCEDURE':
@@ -61,8 +66,9 @@ class Parser(object):
     def var_already_declared(self, declarations) -> bool:
         return self.curr_token.value_of in declarations
 
-    def variable_declaration(self) -> None:
-        self.match('TK_VAR')
+    def variable_declaration(self, procedure=False) -> None:
+        if not procedure:
+            self.match('TK_VAR')
         declarations = []
 
         while self.curr_token.type_of == tokenizer.TOKEN_ID:
@@ -86,6 +92,9 @@ class Parser(object):
         else:
             raise PascalError(f'{self.curr_token.type_of} data type is invalid at {self.curr_token.row} {self.curr_token.column}')
 
+        if procedure:
+            self.match(tokenizer.TOKEN_OPERATOR_RIGHT_PAREN)
+        
         self.match(tokenizer.TOKEN_SEMICOLON)
         
         for variable in declarations:
@@ -122,8 +131,8 @@ class Parser(object):
         while self.curr_token.type_of != 'TK_END':
             type_of = self.curr_token.type_of
 
-            if type_of == 'TK_WRITELN':
-                self.write_line_statement()
+            if type_of == 'TK_WRITE':
+                self.write_statement()
             elif type_of == tokenizer.TOKEN_ID:
                 self.assignment_statement()
             elif type_of == 'TK_WHILE':
@@ -414,8 +423,8 @@ class Parser(object):
         else:
             raise PascalError(f'Emit failed to match operation {op}')
 
-    def write_line_statement(self) -> object:
-        self.match('TK_WRITELN')
+    def write_statement(self) -> object:
+        self.match('TK_WRITE')
         self.match(tokenizer.TOKEN_OPERATOR_LEFT_PAREN)
 
         while True:
@@ -443,7 +452,7 @@ class Parser(object):
                     self.generate_op_code(OPCODE['PRINT_B'])
                     self.generate_address(symbol.dp)
                 else:
-                    raise PascalError('writeln does not support symbol {str(symbol)}')
+                    raise PascalError('write does not support symbol {str(symbol)}')
 
             if self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_INT:
                 self.generate_op_code(OPCODE['PRINT_ILIT'])
@@ -470,7 +479,6 @@ class Parser(object):
                 self.match(tokenizer.TOKEN_OPERATOR_COMMA)
             elif type_of == tokenizer.TOKEN_OPERATOR_RIGHT_PAREN:
                 self.match(tokenizer.TOKEN_OPERATOR_RIGHT_PAREN)
-                self.generate_op_code(OPCODE['NEW_LINE'])
                 return
             else:
                 raise PascalError(f'Expected comma or right paren, found: {self.curr_token.type_of}')
@@ -651,6 +659,8 @@ class Parser(object):
         self.match('TK_PROCEDURE')
         procedure = self.curr_token
         self.match(tokenizer.TOKEN_ID)
+        self.match(tokenizer.TOKEN_OPERATOR_LEFT_PAREN)
+        self.variable_declaration(procedure=True)
         self.match(tokenizer.TOKEN_SEMICOLON)
 
         self.generate_op_code(OPCODE['JMP'])

@@ -1,0 +1,8 @@
+program lalg;
+{teste}
+var a: integer;
+var b: real;
+begin
+read(a, @, 1);
+writeln(a b);
+end.
