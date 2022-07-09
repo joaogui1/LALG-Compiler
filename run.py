@@ -17,6 +17,7 @@ if __name__ == '__main__':
     print('Parsing...')
     parser = Parser(tokens=tokens)
     byte_array = parser.parse()
+    
     print('Emulating...')
     emulator = Emulator(byte_array)
     emulator.start()

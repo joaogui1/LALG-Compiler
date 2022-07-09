@@ -1,7 +1,7 @@
 import sys
 from helper import *
 from constants import *
-from pascal_loader import PascalError
+from pascal_loader.pascal_error import PascalError
 
 class Emulator(object):
     def __init__(self, bytes) -> None:
@@ -58,6 +58,8 @@ class Emulator(object):
             OPCODE['RETRIEVE']: self.retrieve,
             OPCODE['SUB']: self.sub,
             OPCODE['XCHG']: self.xchg,
+            OPCODE['READ_INT']: self.read_int,
+            OPCODE['READ_REAL']: self.read_real,
         }
 
         op = self.bytes[self.ip]
@@ -199,6 +201,32 @@ class Emulator(object):
         self.data_array[self.pointer] = top
         self.pointer += 1
         return top
+
+    def read_int(self) -> object:
+        self.ip += 1
+        user_input = input()
+        try:
+            user_input = int(user_input)
+        except:
+            raise PascalError("Value entered is not valid")
+        
+        self.pointer = self.immediate_value()
+        self.data_array[self.pointer] = user_input
+        self.pointer += 1
+        return user_input
+
+    def read_real(self) -> object:
+        self.ip += 1
+        user_input = input()
+        try:
+            user_input = float(user_input)
+        except:
+            raise PascalError("Value entered is not valid")
+        
+        self.pointer = self.immediate_value()
+        self.data_array[self.pointer] = user_input
+        self.pointer += 1
+        return user_input
 
     def push_char(self) -> None:
         self.ip += 1

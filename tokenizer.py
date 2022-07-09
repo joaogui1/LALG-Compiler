@@ -1,4 +1,5 @@
 from pascal_loader import *
+from pascal_loader.pascal_error import PascalError
 
 TOKEN_NAME_PREFIX = 'TK_'
 

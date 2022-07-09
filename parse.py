@@ -3,7 +3,7 @@ from re import T
 import tokenizer
 from helper import *
 from constants import *
-from pascal_loader import PascalError
+from pascal_loader.pascal_error import PascalError
 import pascal_loader.symbol_tables as symbol_tables
 
 class Parser(object):
@@ -25,7 +25,6 @@ class Parser(object):
         return None
 
     def match(self, token_type) -> None:
-        print(self.curr_token)
         if self.curr_token.type_of == token_type:
             try:
                 self.curr_token = next(self.tokens)
@@ -58,8 +57,10 @@ class Parser(object):
             while self.curr_token.type_of == 'TK_PROCEDURE':
                 self.procedure_declaration()
             self.begin()
-        else:
+        elif self.curr_token.type_of == 'TK_BEGIN':
             self.begin()
+        else:
+            raise PascalError(f'begin statement not found')
 
         return self.bytes
 
@@ -109,8 +110,10 @@ class Parser(object):
             self.variable_declaration()
         elif self.curr_token.type_of == 'TK_PROCEDURE':
             self.procedure_declaration()
-        else:
+        elif self.curr_token.type_of == 'TK_BEGIN':
             self.begin()
+        else:
+            raise PascalError(f'begin statement not found')
 
     def begin(self) -> None:
         self.match('TK_BEGIN')
@@ -133,6 +136,8 @@ class Parser(object):
 
             if type_of == 'TK_WRITE':
                 self.write_statement()
+            elif type_of == 'TK_READ':
+                self.read_statement()
             elif type_of == tokenizer.TOKEN_ID:
                 self.assignment_statement()
             elif type_of == 'TK_WHILE':
@@ -179,6 +184,35 @@ class Parser(object):
             self.generate_address(symbol.dp)
         else:
             raise PascalError(f'Type mismatch {lhs_type=} {rhs_type=}')
+
+    def read_statement(self) -> None:
+        self.match('TK_READ')
+        self.match(tokenizer.TOKEN_OPERATOR_LEFT_PAREN)
+
+        while True:
+            symbol = self.find_name_or_error()
+            lhs_type = symbol.data_type
+            self.match(tokenizer.TOKEN_ID)
+
+            if lhs_type == tokenizer.TOKEN_DATA_TYPE_INT:
+                self.generate_op_code(OPCODE['READ_INT'])
+                self.generate_address(symbol.dp)
+            elif lhs_type == tokenizer.TOKEN_DATA_TYPE_REAL:
+                self.generate_op_code(OPCODE['READ_REAL'])
+                self.generate_address(symbol.dp)
+            else:
+                raise PascalError(f'Invalid type {lhs_type=}')
+
+            type_of = self.curr_token.type_of
+            if type_of == tokenizer.TOKEN_OPERATOR_COMMA:
+                self.match(tokenizer.TOKEN_OPERATOR_COMMA)
+            elif type_of == tokenizer.TOKEN_OPERATOR_RIGHT_PAREN:
+                self.match(tokenizer.TOKEN_OPERATOR_RIGHT_PAREN)
+                return
+            else:
+                raise PascalError(f'Expected comma or right paren, found: {self.curr_token.type_of}')
+
+        
 
     def e(self) -> object:
         t1 = self.t()
@@ -430,14 +464,7 @@ class Parser(object):
         while True:
             if self.curr_token.type_of == tokenizer.TOKEN_ID:
                 symbol = self.find_name_or_error()
-
-                if hasattr(symbol, 'assignment_type'):
-                    self.match(tokenizer.TOKEN_ID)
-                    self.access_array(symbol)
-                    self.generate_op_code(OPCODE['RET_AND_PRINT'])
-                    continue
-                else:
-                    expression = self.e()
+                expression = self.e()
 
                 if expression == tokenizer.TOKEN_DATA_TYPE_INT:
                     self.generate_op_code(OPCODE['PRINT_I'])
@@ -448,11 +475,8 @@ class Parser(object):
                 elif expression == tokenizer.TOKEN_DATA_TYPE_REAL:
                     self.generate_op_code(OPCODE['PRINT_R'])
                     self.generate_address(symbol.dp)
-                elif expression == tokenizer.TOKEN_DATA_TYPE_BOOL:
-                    self.generate_op_code(OPCODE['PRINT_B'])
-                    self.generate_address(symbol.dp)
                 else:
-                    raise PascalError('write does not support symbol {str(symbol)}')
+                    raise PascalError(f'write does not support symbol {str(symbol)}')
 
             if self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_INT:
                 self.generate_op_code(OPCODE['PRINT_ILIT'])
@@ -624,36 +648,6 @@ class Parser(object):
             self.generate_address(save)
         
         self.ip = save
-
-    def access_array(self, symbol) -> None:
-        self.match(tokenizer.TOKEN_OPERATOR_LEFT_BRACKET)
-        curr_symbol = self.find_name_or_error()
-        self.generate_op_code(OPCODE['PUSH'])
-        self.generate_address(curr_symbol.dp)
-        self.match(tokenizer.TOKEN_ID)
-        self.match(tokenizer.TOKEN_OPERATOR_RIGHT_BRACKET)
-
-        self.generate_op_code(OPCODE['PUSHI'])
-
-        if curr_symbol.data_type == tokenizer.TOKEN_DATA_TYPE_INT:
-            self.generate_address(symbol.left)
-            self.generate_op_code(OPCODE['XCHG'])
-            self.generate_op_code(OPCODE['SUB'])
-            self.generate_op_code(OPCODE['PUSHI'])
-            self.generate_address(4)
-            self.generate_op_code(OPCODE['MULTIPLY'])
-            self.generate_op_code(OPCODE['PUSHI'])
-            self.generate_address(symbol.dp)
-            self.generate_op_code(OPCODE['ADD'])
-        elif curr_symbol.data_type == tokenizer.TOKEN_DATA_TYPE_CHAR:
-            self.generate_address(symbol.left)
-            self.generate_op_code(OPCODE['XCHG'])
-            self.generate_op_code(OPCODE['SUB'])
-            self.generate_op_code(OPCODE['PUSHI'])
-            self.generate_address(symbol.dp)
-            self.generate_op_code(OPCODE['ADD'])
-        else:
-            raise Parser(f'Array access with type {curr_symbol.data_type} not supported.')
 
     def procedure_declaration(self) -> None:
         self.match('TK_PROCEDURE')

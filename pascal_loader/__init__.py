@@ -13,7 +13,6 @@ NEGATIVE = 9
 OPERATOR = 10
 UNDERLINE = 11
 
-COMMENT_TYPES = ['//', '{*', '(*']
 ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 OPERATORS = '+-/,()<>:=*[]'
 DIGITS = '0123456789'
@@ -44,6 +43,3 @@ with open(os.path.join(__name__, 'keywords.txt')) as keyword_file:
     for line in keyword_file.readlines():
         symbol = line.strip()
         symbol_map[symbol] = RESERVED
-
-class PascalError(Exception):
-    pass

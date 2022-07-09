@@ -48,4 +48,6 @@ OPCODE = {
     'RETRIEVE': 37,
     'SUB': 38,
     'XCHG': 39,
+    'READ_INT': 40,
+    'READ_REAL': 41
 }

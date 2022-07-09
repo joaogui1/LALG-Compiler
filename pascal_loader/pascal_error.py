@@ -1,0 +1,2 @@
+class PascalError(Exception):
+    pass

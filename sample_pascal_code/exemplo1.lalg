@@ -3,7 +3,7 @@ program nome1;
 var a, b, c : integer;
 
 begin
-    a:=1;
+    read(a);
     b:=a*2;
 
     while b>0 do
