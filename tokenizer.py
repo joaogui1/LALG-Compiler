@@ -154,15 +154,15 @@ def case_operator(text):
     else:
         return text[index]
 
-def get_token(pascal_file):
+def get_token(code):
     row, column, index = 1, 1, 0
     token_list = []
 
-    while index < len(pascal_file.contents):
-        symbol = symbol_map.get(pascal_file.contents[index])
+    while index < len(code.contents):
+        symbol = symbol_map.get(code.contents[index])
         
         if symbol == LETTER:
-            word = case_letter(pascal_file.contents[index:])
+            word = case_letter(code.contents[index:])
             index += len(word)
             if reserved_tokens.get(word) is None:
                 token_list.append(Token(word, TOKEN_ID, row, column))
@@ -170,7 +170,7 @@ def get_token(pascal_file):
                 token_list.append(Token(word, token_name(word), row, column))
             column += len(word)
         elif symbol == DIGIT:
-            word = case_digit(pascal_file.contents[index:])
+            word = case_digit(code.contents[index:])
             index += len(word)
             #TODO tem que lidar com erro aqui, não?
             if word.count('.') == 1:
@@ -182,7 +182,7 @@ def get_token(pascal_file):
             column += 1
             index += 1
         elif symbol == OPERATOR:
-            word = case_operator(pascal_file.contents[index:])
+            word = case_operator(code.contents[index:])
             index += len(word)
             token_list.append(Token(word, operators_classifications[word], row, column))
             column += len(word)
@@ -199,12 +199,12 @@ def get_token(pascal_file):
             token_list.append(Token(';', TOKEN_SEMICOLON, row, column))
             column += 1
         elif symbol == COMMENT:
-            word = case_comment(pascal_file.contents[index:])
+            word = case_comment(code.contents[index:])
             index += len(word)
             token_list.append(Token(word, TOKEN_COMMENT, row, column))
             column += len(word)
         else:
-            raise LalgError('Unknown symbol: %s (ln %i, col %i)' % (pascal_file.contents[index], row, column))
+            raise LalgError('Unknown symbol: %s (ln %i, col %i)' % (code.contents[index], row, column))
     token_list.append(Token('EOF', TOKEN_EOF, row, column))
     return token_list
 
