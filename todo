@@ -1,0 +1,7 @@
+[ ] erro ext (maio_io)
+[ ] move constants.py to pascal_loader
+[ ] move? for at the end of tokenizer
+[ ] checar erro com joao tokenizer (case_digit)
+[ ] checar se existe `repeat` em lalg
+
+python3 run.py -i sample_pascal_code/ex1.lalg
