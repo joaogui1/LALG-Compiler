@@ -203,13 +203,10 @@ def case_operator(text):
         operator as string
     '''
     index = 0
+    operators = [':=', '<>', '<=', '>=']
 
-    if text[index] == ':' and text[index + 1] == '=':
-        return text[index] + text[index + 1]
-    elif text[index] == '<' and (text[index + 1] == '=' or text[index + 1] == '>'):
-        return text[index] + text[index + 1]
-    elif text[index] == '>' and text[index + 1] == '=':
-        return text[index] + text[index + 1]
+    if text[index:index+2] in operators:
+        return text[index:index+2]
     else:
         return text[index]
 
