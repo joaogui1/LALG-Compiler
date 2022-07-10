@@ -1,0 +1,19 @@
+program nome5;
+
+{exemplo 2 sem utilização de procedure}
+
+var a: integer;
+var b: integer;
+var c: integer;
+
+begin {programa principal}
+    read(b);
+    c := 1;
+    a := 1;
+    if a<b+c then
+        begin
+            a:= c+b;
+            write(a);
+        end
+    else c:= a+b;
+end.

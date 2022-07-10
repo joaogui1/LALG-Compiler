@@ -289,7 +289,7 @@ class Parser(object):
         else:
             type_of = self.curr_token.type_of
             self.match(type_of)
-            t2 = self.t()
+            t2 = self.e()
             t1 = self.emit(type_of, t1, t2)
 
         return t1
@@ -540,7 +540,12 @@ class Parser(object):
         self.generate_op_code(OPCODE['JFALSE'])
         hole = self.ip
         self.generate_address(0)
-        self.statements()
+        if self.curr_token.type_of == 'TK_BEGIN':
+            self.match('TK_BEGIN')
+            self.statements()
+            self.match('TK_END')
+        else:
+            self.statements()
 
         if self.curr_token.type_of == 'TK_ELSE':
             self.generate_op_code(OPCODE['JMP'])
