@@ -55,7 +55,6 @@ class Emulator(object):
             OPCODE['POP_CHAR']: self.pop_char,
             OPCODE['POP_REAL_LIT']: self.pop_real_lit,
             OPCODE['POP']: self.pop,
-            OPCODE['PRINT_B']: self.print_b,
             OPCODE['PRINT_C']: self.print_c,
             OPCODE['PRINT_I']: self.print_i,
             OPCODE['PRINT_ILIT']: self.print_ilit,
