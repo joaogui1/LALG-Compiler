@@ -1,12 +1,18 @@
 import os
 import sys
 
+from loader.lalg_error import LalgError
+
 LALG_FILE_EXT = '.lalg'
 
 class LalgFile(object):
     def __init__(self, input_file, output_file=None) -> None:
+        self.FILE = None
         self.input_file = input_file
         self.output_file = output_file
+
+        if not self.input_file.endswith(LALG_FILE_EXT):
+            raise LalgError(f'Invalid file extension. Expected {LALG_FILE_EXT} and got .{input_file.split(".")[-1]}')
 
         try:
             self.FILE = open(self.input_file)
@@ -31,4 +37,5 @@ class LalgFile(object):
         return self.input_file
 
     def __del__(self) -> None:
-        self.FILE.close()
+        if self.FILE is not None:
+            self.FILE.close()
