@@ -166,11 +166,12 @@ def get_token(code):
         elif symbol == DIGIT:
             word = case_digit(code.contents[index:])
             index += len(word)
-            #TODO tem que lidar com erro aqui, não?
-            if word.count('.') == 1:
+            if word.count('.') == 0:
+                token_list.append(Token(word, TOKEN_DATA_TYPE_INT, row, column))
+            elif word.count('.') == 1:
                 token_list.append(Token(word, TOKEN_REAL_LIT, row, column))
             else:
-                token_list.append(Token(word, TOKEN_DATA_TYPE_INT, row, column))
+                raise LalgError(f'Invalid number {word}')
             column += len(word)
         elif symbol == SPACE:
             column += 1
