@@ -34,7 +34,7 @@ TOKEN_RESERVED = TOKEN_NAME_PREFIX + 'RESERVED'
 TOKEN_SEMICOLON = TOKEN_NAME_PREFIX + 'SEMICOLON'
 TOKEN_STRING_LIT = TOKEN_NAME_PREFIX + 'STR_LIT'
 
-operators_classifications = {
+operators_tokens = {
     '-': TOKEN_OPERATOR_MINUS,
     ',': TOKEN_OPERATOR_COMMA,
     ':': TOKEN_OPERATOR_COLON,
@@ -176,13 +176,8 @@ def case_digit(text):
             index += 1
         elif char_val == DOT:
             if digit_seen:
-                if suffix.__contains__('.') and symbol_map.get(text[index + 1]) is DOT:
-                    suffix += char
-                    suffix += text[index + 1]
-                    index += 2
-                else:
-                    suffix += char
-                    index += 1
+                suffix += char
+                index += 1
             else:
                 raise LalgError('Invalid literal.')
         else:
@@ -270,7 +265,7 @@ def get_token(code):
         elif symbol == OPERATOR:
             word = case_operator(code.contents[index:])
             index += len(word)
-            token_list.append(Token(word, operators_classifications[word], row, column))
+            token_list.append(Token(word, operators_tokens[word], row, column))
             column += len(word)
         
         elif symbol == EOL:
@@ -295,7 +290,7 @@ def get_token(code):
             column += len(word)
         
         else:
-            raise LalgError('Unknown symbol: %s (ln %i, col %i)' % (code.contents[index], row, column))
+            raise LalgError(f'Unknown symbol: {code.contents[index]} at {row}, {column}')
     
     token_list.append(Token('EOF', TOKEN_EOF, row, column))
     return token_list
