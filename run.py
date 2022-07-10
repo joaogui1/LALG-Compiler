@@ -3,7 +3,7 @@ import argparse
 from parse import Parser
 from emulator import Emulator
 from tokenizer import get_token
-from loader.main_io import PascalFile
+from loader.main_io import LalgFile
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -12,7 +12,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     print('Reading file...')
-    tokens = get_token(PascalFile(input_file=args.input))
+    tokens = get_token(LalgFile(input_file=args.input))
 
     print('Parsing...')
     parser = Parser(tokens=tokens)

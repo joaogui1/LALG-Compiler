@@ -1,9 +1,9 @@
 import os
 import sys
 
-PASCAL_FILE_EXT = '.lalg'
+LALG_FILE_EXT = '.lalg'
 
-class PascalFile(object):
+class LalgFile(object):
     def __init__(self, input_file, output_file=None) -> None:
         self.input_file = input_file
         self.output_file = output_file
