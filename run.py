@@ -3,7 +3,7 @@ import argparse
 from parse import Parser
 from emulator import Emulator
 from tokenizer import get_token
-from pascal_loader.main_io import PascalFile
+from loader.main_io import PascalFile
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

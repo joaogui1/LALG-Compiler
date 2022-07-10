@@ -1,5 +1,5 @@
-from pascal_loader import *
-from pascal_loader.pascal_error import PascalError
+from loader import *
+from loader.lalg_error import LalgError
 
 TOKEN_NAME_PREFIX = 'TK_'
 
@@ -58,8 +58,6 @@ operators_classifications = {
 
 reserved_tokens = {'integer': TOKEN_DATA_TYPE_INT,
                    'real': TOKEN_DATA_TYPE_REAL}
-
-string_store = set()
 
 class Token(object):
     def __init__(self, value_of, type_of, row, column) -> None:
@@ -129,7 +127,7 @@ def case_digit(text):
                     suffix += char
                     index += 1
             else:
-                raise PascalError('Invalid literal.')
+                raise LalgError('Invalid literal.')
         elif char.lower() == 'e':
             if text[index + 1] == '-' or text[index + 1] == '+':
                 suffix += char
@@ -139,7 +137,7 @@ def case_digit(text):
                 suffix += char
                 index += 1
             else:
-                raise PascalError('Invalid literal.')
+                raise LalgError('Invalid literal.')
         else:
             return suffix
 
@@ -206,7 +204,7 @@ def get_token(pascal_file):
             token_list.append(Token(word, TOKEN_COMMENT, row, column))
             column += len(word)
         else:
-            raise PascalError('Unknown symbol: %s (ln %i, col %i)' % (pascal_file.contents[index], row, column))
+            raise LalgError('Unknown symbol: %s (ln %i, col %i)' % (pascal_file.contents[index], row, column))
     token_list.append(Token('EOF', TOKEN_EOF, row, column))
     return token_list
 

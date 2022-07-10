@@ -1,7 +1,7 @@
 import sys
 from helper import *
 from constants import *
-from pascal_loader.pascal_error import PascalError
+from loader.lalg_error import LalgError
 
 class Emulator(object):
     def __init__(self, bytes) -> None:
@@ -71,7 +71,7 @@ class Emulator(object):
                 self.start()
         else:
             print(f'Stack {self.stack}')
-            raise PascalError(f'Operation {op} is not supported')
+            raise LalgError(f'Operation {op} is not supported')
 
     def pushi(self) -> None:
         self.ip += 1
@@ -208,7 +208,7 @@ class Emulator(object):
         try:
             user_input = int(user_input)
         except:
-            raise PascalError("Value entered is not valid")
+            raise LalgError("Value entered is not valid")
         
         self.pointer = self.immediate_value()
         self.data_array[self.pointer] = user_input
@@ -221,7 +221,7 @@ class Emulator(object):
         try:
             user_input = float(user_input)
         except:
-            raise PascalError("Value entered is not valid")
+            raise LalgError("Value entered is not valid")
         
         self.pointer = self.immediate_value()
         self.data_array[self.pointer] = user_input
