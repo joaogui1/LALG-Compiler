@@ -1,4 +1,3 @@
-import sys
 from helper import *
 from constants import *
 from loader.lalg_error import LalgError

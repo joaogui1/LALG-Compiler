@@ -1,6 +1,3 @@
-import os
-import sys
-
 from loader.lalg_error import LalgError
 
 LALG_FILE_EXT = '.lalg'

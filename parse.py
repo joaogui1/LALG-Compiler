@@ -1,5 +1,3 @@
-# coding=utf-8
-from re import T
 import tokenizer
 from helper import *
 from constants import *
