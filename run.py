@@ -13,7 +13,7 @@ if __name__ == '__main__':
     
     print('Reading file...')
     tokens = get_token(PascalFile(input_file=args.input))
-
+    
     print('Parsing...')
     parser = Parser(tokens=tokens)
     byte_array = parser.parse()

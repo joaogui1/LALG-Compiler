@@ -51,11 +51,13 @@ class Parser(object):
         while self.curr_token.type_of == 'TK_COMMENT':
             self.match(tokenizer.TOKEN_COMMENT)
 
+
         if self.curr_token.type_of == 'TK_VAR':
             self.variable_declaration()
         elif self.curr_token.type_of == 'TK_PROCEDURE':
             while self.curr_token.type_of == 'TK_PROCEDURE':
                 self.procedure_declaration()
+            
             self.begin()
         elif self.curr_token.type_of == 'TK_BEGIN':
             self.begin()
@@ -67,9 +69,7 @@ class Parser(object):
     def var_already_declared(self, declarations) -> bool:
         return self.curr_token.value_of in declarations
 
-    def variable_declaration(self, procedure=False) -> None:
-        if not procedure:
-            self.match('TK_VAR')
+    def procedure_arguments(self) -> None:
         declarations = []
 
         while self.curr_token.type_of == tokenizer.TOKEN_ID:
@@ -93,8 +93,51 @@ class Parser(object):
         else:
             raise PascalError(f'{self.curr_token.type_of} data type is invalid at {self.curr_token.row} {self.curr_token.column}')
 
-        if procedure:
-            self.match(tokenizer.TOKEN_OPERATOR_RIGHT_PAREN)
+        self.match(tokenizer.TOKEN_OPERATOR_RIGHT_PAREN)        
+        self.match(tokenizer.TOKEN_SEMICOLON)
+        
+        for variable in declarations:
+            new_symbol = symbol_tables.SymbolObject(name=variable,
+                                                    object_type=symbol_tables.TYPE_VARIABLE,
+                                                    data_type=data_type,
+                                                    dp=self.dp)
+            self.symbol_table.append(new_symbol)
+            self.dp += 1
+        
+        if self.curr_token.type_of == 'TK_VAR':
+            self.variable_declaration(procedure=True)
+        elif self.curr_token.type_of == 'TK_PROCEDURE':
+            self.procedure_declaration()
+        elif self.curr_token.type_of == 'TK_BEGIN':
+            self.begin(procedure=True)
+        else:
+            raise PascalError(f'begin statement not found')
+
+
+    def variable_declaration(self, procedure=False) -> None:
+        self.match('TK_VAR')
+        declarations = []
+
+        while self.curr_token.type_of == tokenizer.TOKEN_ID:
+            if self.var_already_declared(declarations):
+                raise PascalError(f'Variable already declared: {self.curr_token.value_of}')
+
+            declarations.append(self.curr_token.value_of)
+            self.match(tokenizer.TOKEN_ID)
+            
+            if self.curr_token.type_of == tokenizer.TOKEN_OPERATOR_COMMA:
+                self.match(tokenizer.TOKEN_OPERATOR_COMMA)
+
+        self.match(tokenizer.TOKEN_OPERATOR_COLON)
+        
+        if self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_INT:
+            self.match(tokenizer.TOKEN_DATA_TYPE_INT)
+            data_type = tokenizer.TOKEN_DATA_TYPE_INT
+        elif self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_REAL:
+            self.match(tokenizer.TOKEN_DATA_TYPE_REAL)
+            data_type = tokenizer.TOKEN_DATA_TYPE_REAL
+        else:
+            raise PascalError(f'{self.curr_token.type_of} data type is invalid at {self.curr_token.row} {self.curr_token.column}')
         
         self.match(tokenizer.TOKEN_SEMICOLON)
         
@@ -107,21 +150,25 @@ class Parser(object):
             self.dp += 1
         
         if self.curr_token.type_of == 'TK_VAR':
-            self.variable_declaration()
+            self.variable_declaration(procedure)
         elif self.curr_token.type_of == 'TK_PROCEDURE':
             self.procedure_declaration()
         elif self.curr_token.type_of == 'TK_BEGIN':
-            self.begin()
+            self.begin(procedure)
         else:
             raise PascalError(f'begin statement not found')
 
-    def begin(self) -> None:
+    def begin(self, procedure=False) -> None:
         self.match('TK_BEGIN')
         self.statements()
         self.match('TK_END')
-        self.match(tokenizer.TOKEN_DOT)
-        self.match(tokenizer.TOKEN_EOF)
-        self.generate_op_code(OPCODE['HALT'])
+
+        if not procedure:
+            self.match(tokenizer.TOKEN_DOT)
+            self.match(tokenizer.TOKEN_EOF)
+            self.generate_op_code(OPCODE['HALT'])
+        else:
+            self.match(tokenizer.TOKEN_SEMICOLON)
 
     def statements(self) -> None:
         """
@@ -291,9 +338,9 @@ class Parser(object):
         else:
             type_of = self.curr_token.type_of
             self.match(type_of)
-            t2 = self.t()
+            t2 = self.e()
             t1 = self.emit(type_of, t1, t2)
-
+        
         return t1
 
     def boolean(self, op, t1, t2) -> object:
@@ -539,10 +586,18 @@ class Parser(object):
         self.match('TK_IF')
         self.condition()
         self.match('TK_THEN')
+
+        
         self.generate_op_code(OPCODE['JFALSE'])
         hole = self.ip
         self.generate_address(0)
-        self.statements()
+
+        if self.curr_token.type_of == 'TK_BEGIN':
+            self.match('TK_BEGIN')
+            self.statements()
+            self.match('TK_END')
+        else:
+            self.statements()
 
         if self.curr_token.type_of == 'TK_ELSE':
             self.generate_op_code(OPCODE['JMP'])
@@ -654,8 +709,7 @@ class Parser(object):
         procedure = self.curr_token
         self.match(tokenizer.TOKEN_ID)
         self.match(tokenizer.TOKEN_OPERATOR_LEFT_PAREN)
-        self.variable_declaration(procedure=True)
-        self.match(tokenizer.TOKEN_SEMICOLON)
+        self.procedure_arguments()
 
         self.generate_op_code(OPCODE['JMP'])
         hole = self.ip
