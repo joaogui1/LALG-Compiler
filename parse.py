@@ -1,10 +1,8 @@
-# coding=utf-8
-from re import T
 import tokenizer
 from helper import *
 from constants import *
-from pascal_loader.pascal_error import PascalError
-import pascal_loader.symbol_tables as symbol_tables
+from loader.lalg_error import LalgError
+import loader.symbol_tables as symbol_tables
 
 class Parser(object):
     SIZE = 5000
@@ -31,7 +29,7 @@ class Parser(object):
             except StopIteration:
                 return
         else:
-            raise PascalError(f'Token mismatch at {self.curr_token.row} {self.curr_token.column}. Expected {str(self.curr_token)} and got {str(token_type)}')
+            raise LalgError(f'Token mismatch at {self.curr_token.row} {self.curr_token.column}. Expected {str(self.curr_token)} and got {str(token_type)}')
 
     def generate_op_code(self, op_code) -> None:
         self.bytes[self.ip] = op_code
@@ -62,7 +60,7 @@ class Parser(object):
         elif self.curr_token.type_of == 'TK_BEGIN':
             self.begin()
         else:
-            raise PascalError(f'begin statement not found')
+            raise LalgError(f'begin statement not found')
 
         return self.bytes
 
@@ -74,7 +72,7 @@ class Parser(object):
 
         while self.curr_token.type_of == tokenizer.TOKEN_ID:
             if self.var_already_declared(declarations):
-                raise PascalError(f'Variable already declared: {self.curr_token.value_of}')
+                raise LalgError(f'Variable already declared: {self.curr_token.value_of}')
 
             declarations.append(self.curr_token.value_of)
             self.match(tokenizer.TOKEN_ID)
@@ -91,7 +89,7 @@ class Parser(object):
             self.match(tokenizer.TOKEN_DATA_TYPE_REAL)
             data_type = tokenizer.TOKEN_DATA_TYPE_REAL
         else:
-            raise PascalError(f'{self.curr_token.type_of} data type is invalid at {self.curr_token.row} {self.curr_token.column}')
+            raise LalgError(f'{self.curr_token.type_of} data type is invalid at {self.curr_token.row} {self.curr_token.column}')
 
         self.match(tokenizer.TOKEN_OPERATOR_RIGHT_PAREN)        
         self.match(tokenizer.TOKEN_SEMICOLON)
@@ -156,7 +154,7 @@ class Parser(object):
         elif self.curr_token.type_of == 'TK_BEGIN':
             self.begin(procedure)
         else:
-            raise PascalError(f'begin statement not found')
+            raise LalgError(f'begin statement not found')
 
     def begin(self, procedure=False) -> None:
         self.match('TK_BEGIN')
@@ -208,7 +206,7 @@ class Parser(object):
         symbol = self.find_name_in_symbol_table(self.curr_token.value_of)
 
         if symbol is None:
-            raise PascalError(f'Variable {self.curr_token.value_of} is not declared')
+            raise LalgError(f'Variable {self.curr_token.value_of} is not declared')
         else:
             return symbol
 
@@ -230,7 +228,7 @@ class Parser(object):
             self.generate_op_code(OPCODE['POP'])
             self.generate_address(symbol.dp)
         else:
-            raise PascalError(f'Type mismatch {lhs_type=} {rhs_type=}')
+            raise LalgError(f'Type mismatch {lhs_type=} {rhs_type=}')
 
     def read_statement(self) -> None:
         self.match('TK_READ')
@@ -248,7 +246,7 @@ class Parser(object):
                 self.generate_op_code(OPCODE['READ_REAL'])
                 self.generate_address(symbol.dp)
             else:
-                raise PascalError(f'Invalid type {lhs_type=}')
+                raise LalgError(f'Invalid type {lhs_type=}')
 
             type_of = self.curr_token.type_of
             if type_of == tokenizer.TOKEN_OPERATOR_COMMA:
@@ -257,7 +255,7 @@ class Parser(object):
                 self.match(tokenizer.TOKEN_OPERATOR_RIGHT_PAREN)
                 return
             else:
-                raise PascalError(f'Expected comma or right paren, found: {self.curr_token.type_of}')
+                raise LalgError(f'Expected comma or right paren, found: {self.curr_token.type_of}')
 
         
 
@@ -327,14 +325,14 @@ class Parser(object):
             self.match(tokenizer.TOKEN_REAL_LIT)
             return tokenizer.TOKEN_REAL_LIT
         else:
-            raise PascalError(f'f() does not support {self.curr_token.value_of} {token_type}')
+            raise LalgError(f'f() does not support {self.curr_token.value_of} {token_type}')
 
     def condition(self) -> object:
         t1 = self.e()
         value_of = self.curr_token.value_of
 
         if CONDITIONALS.get(value_of) is None:
-            raise PascalError(f"Expected conditional, got: {value_of}")
+            raise LalgError(f"Expected conditional, got: {value_of}")
         else:
             type_of = self.curr_token.type_of
             self.match(type_of)
@@ -413,7 +411,7 @@ class Parser(object):
                 self.generate_op_code(OPCODE['FADD'])
                 return tokenizer.TOKEN_DATA_TYPE_REAL
             else:
-                raise PascalError(f'Unable to match operation + with types {t1} and {t2}')
+                raise LalgError(f'Unable to match operation + with types {t1} and {t2}')
 
         elif op == tokenizer.TOKEN_OPERATOR_MINUS:
             if t1 == tokenizer.TOKEN_DATA_TYPE_INT and t2 == tokenizer.TOKEN_DATA_TYPE_INT:
@@ -433,7 +431,7 @@ class Parser(object):
                 self.generate_op_code(OPCODE['FSUB'])
                 return tokenizer.TOKEN_DATA_TYPE_REAL
             else:
-                raise PascalError('Unable to match operation - with types {t1} and {t2}')
+                raise LalgError('Unable to match operation - with types {t1} and {t2}')
 
         elif op == tokenizer.TOKEN_OPERATOR_DIVISION:
             if t1 == t2:
@@ -456,14 +454,14 @@ class Parser(object):
                 self.generate_op_code(OPCODE['FDIVIDE'])
                 return t1
             else:
-                raise PascalError('Unable to match operation / with types {t1} and {t2}')
+                raise LalgError('Unable to match operation / with types {t1} and {t2}')
 
         elif op == 'TK_DIV':
             if t1 == tokenizer.TOKEN_DATA_TYPE_INT and t2 == tokenizer.TOKEN_DATA_TYPE_INT:
                 self.generate_op_code(OPCODE['DIV'])
                 return tokenizer.TOKEN_DATA_TYPE_INT
             else:
-                raise PascalError('Unable to match operation div with types {t1} and {t2}')
+                raise LalgError('Unable to match operation div with types {t1} and {t2}')
         elif op == tokenizer.TOKEN_OPERATOR_MULTIPLICATION:
             if t1 == tokenizer.TOKEN_DATA_TYPE_INT and t2 == tokenizer.TOKEN_DATA_TYPE_INT:
                 self.generate_op_code(OPCODE['MULTIPLY'])
@@ -482,13 +480,13 @@ class Parser(object):
                 self.generate_op_code(OPCODE['FMULTIPLY'])
                 return tokenizer.TOKEN_DATA_TYPE_REAL
             else:
-                raise PascalError('Unable to match operation * with with types {t1} and {t2}')
+                raise LalgError('Unable to match operation * with with types {t1} and {t2}')
         elif op == 'TK_OR':
             if t1 == tokenizer.TOKEN_DATA_TYPE_BOOL and t2 == tokenizer.TOKEN_DATA_TYPE_BOOL:
                 self.generate_op_code(OPCODE['OR'])
                 return tokenizer.TOKEN_DATA_TYPE_BOOL
             else:
-                raise PascalError('Unable to match operation or with types: with types {t1} and {t2}')
+                raise LalgError('Unable to match operation or with types: with types {t1} and {t2}')
         elif op == tokenizer.TOKEN_OPERATOR_GTE:
             return self.boolean(OPCODE['GTE'], t1, t2)
         elif op == tokenizer.TOKEN_OPERATOR_LTE:
@@ -502,7 +500,7 @@ class Parser(object):
         elif op == tokenizer.TOKEN_OPERATOR_RIGHT_CHEVRON:
             return self.boolean(OPCODE['LES'], t1, t2)
         else:
-            raise PascalError(f'Emit failed to match operation {op}')
+            raise LalgError(f'Emit failed to match operation {op}')
 
     def write_statement(self) -> object:
         self.match('TK_WRITE')
@@ -523,7 +521,7 @@ class Parser(object):
                     self.generate_op_code(OPCODE['PRINT_R'])
                     self.generate_address(symbol.dp)
                 else:
-                    raise PascalError(f'write does not support symbol {str(symbol)}')
+                    raise LalgError(f'write does not support symbol {str(symbol)}')
 
             if self.curr_token.type_of == tokenizer.TOKEN_DATA_TYPE_INT:
                 self.generate_op_code(OPCODE['PRINT_ILIT'])
@@ -552,7 +550,7 @@ class Parser(object):
                 self.match(tokenizer.TOKEN_OPERATOR_RIGHT_PAREN)
                 return
             else:
-                raise PascalError(f'Expected comma or right paren, found: {self.curr_token.type_of}')
+                raise LalgError(f'Expected comma or right paren, found: {self.curr_token.type_of}')
 
     def repeat_statement(self) -> None:
         self.match('TK_REPEAT')
@@ -662,7 +660,7 @@ class Parser(object):
         e1 = self.e()
 
         if e1 == tokenizer.TOKEN_DATA_TYPE_REAL:
-            raise PascalError('Real type not allowed for case: {e1}')
+            raise LalgError('Real type not allowed for case: {e1}')
         
         self.match(tokenizer.TOKEN_OPERATOR_RIGHT_PAREN)
         self.match('TK_OF')

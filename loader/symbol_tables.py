@@ -1,7 +1,5 @@
-TYPE_ARRAY = 'arr'
 TYPE_VARIABLE = 'var' 
 TYPE_FUNCTION = 'func'
-TYPE_PARAMETER = 'par'
 TYPE_PROCEDURE = 'pro'
 TYPE_STATEMENTS = 'stat'
 TYPE_EXPRESSIONS = 'expr'

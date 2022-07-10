@@ -1,0 +1,2 @@
+class LalgError(Exception):
+    pass
