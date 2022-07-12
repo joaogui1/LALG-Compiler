@@ -3,7 +3,7 @@ import argparse
 from parse import Parser
 from emulator import Emulator
 from tokenizer import get_token
-from loader.main_io import LalgFile
+from loader.lalg_file import LalgFile
 
 if __name__ == '__main__':
     # add argument parser

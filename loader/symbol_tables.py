@@ -5,7 +5,10 @@ TYPE_STATEMENTS = 'stat'
 TYPE_EXPRESSIONS = 'expr'
 
 class SymbolObject(object):
+    ''' Symbol Class - wrapper to store symbols such as variables '''
+
     def __init__(self, name, object_type, data_type, dp=None, attribute=None, others=None) -> None:
+        ''' Initializes artibutes '''
         self.dp = dp
         self.name = name
         self.data_type = data_type
@@ -20,8 +23,6 @@ class SymbolObject(object):
         else:
             self.others = []
 
-    def __unicode__(self) -> str:
-        return '<%s, %s, %i, %s>' % (self.name, self.object_type, self.dp, self.data_type)
-
     def __repr__(self) -> str:
-        return '<%s, %s, %i, %s>' % (self.name, self.object_type, self.dp, self.data_type)
+        ''' Creates a string representation of the class '''
+        return f'<{self.name}, {self.object_type}, {self.dp}, {self.data_type}>'

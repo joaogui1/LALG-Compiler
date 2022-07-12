@@ -2,14 +2,14 @@ program nome2;
 
 {exemplo 2}
 
-var a: integer;
+var a: real;
 var b: integer;
 
-procedure nomep(x: integer);
-    var a, c: integer;
+procedure nomep(x: real);
+    var c: integer;
     begin
         c := 1;
-        a := 1;
+        a := 1.0;
         if a<x+c then
             begin
                 a:= c+x;

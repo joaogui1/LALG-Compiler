@@ -1,0 +1,8 @@
+program lalg;
+{numero real não pode ser atribuido a um integer}
+var a: integer;
+var b: real;
+begin
+b := 5;
+a := b;
+end.

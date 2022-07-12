@@ -1,0 +1,10 @@
+program lalg;
+{soma entre real e inteiro pode ocorrer}
+var a: integer;
+var b, c: real;
+begin
+b := 5.5;
+a := 1;
+c := a+b
+write(c)
+end.

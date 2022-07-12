@@ -1,3 +1,4 @@
+''' Creates and stores symbols '''
 import os
 
 RESERVED = 0
@@ -28,17 +29,21 @@ symbol_map = {' ': SPACE,
               '-': NEGATIVE,
               '_': UNDERLINE}
 
+# stores alphabet characters
 for character in ALPHABET:
     symbol_map[character] = LETTER
     symbol_map[character.lower()] = LETTER
 
+# stores operators
 for operator in OPERATORS:
     symbol_map[operator] = OPERATOR
 
+# stores digits
 for digit in DIGITS:
     symbol_map[digit] = DIGIT
     symbol_map[int(digit)] = DIGIT
 
+# stores keywords from the keywords file
 with open(os.path.join(__name__, 'keywords.txt')) as keyword_file:
     for line in keyword_file.readlines():
         symbol = line.strip()

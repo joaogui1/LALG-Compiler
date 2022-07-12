@@ -3,7 +3,7 @@ from constants import *
 from loader.lalg_error import LalgError
 
 class Emulator(object):
-    ''' Token Class - uses bytes generated from tokens to execute code '''
+    ''' Emulator Class - uses bytes generated from tokens to execute code '''
 
     def __init__(self, bytes) -> None:
         ''' Initializes artibutes '''
